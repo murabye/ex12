@@ -1,23 +1,69 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Diagnostics;
+using MyLib;
 
 namespace ex12
 {
+    delegate void sort(int countEq, int countCh, int[] arr);         // делегат для сортировки
+
     internal class Program
     {
-        static int countEqual = 0, countChange = 0;
+        static Random rand = new Random();
 
         private static void Main()
         {
+            var scs = new sort(SimpleChoiseSort);
+            var msd = new sort(RadixSort);
+
+            while (true)
+            {
+                var length = Ask.Num("Введите длину массива: ");
+                var arr = Generate(length);                         // генерация массива
+                Console.WriteLine(String.Join(", ", arr));          // выписать массив
+
+                var simple = (int[])arr.Clone();
+                var radix = (int[])arr.Clone();
+
+                // несортированный массив
+                Try(simple, scs);
+                Try(radix, msd);
+
+                // сортированный массив
+                Try(simple, scs);
+                Try(radix, msd);
+
+                // развернуть
+                Array.Reverse(simple);
+                Array.Reverse(radix);
+                // сортированный в обратном порядке
+                Try(simple, scs);
+                Try(radix, msd);
+
+                OC.Stay();
+            }
 
         }
 
+        static void Try(int[] arr, sort method)
+        {
+            var countChange = 0;                                // подготовка: 
+            var countEqual = 0;                                 // обнуление счетчиков операций
+            var time = Stopwatch.StartNew();                    // и времени
 
-        static void SimpleChoiseSort(int[] arr)
+            Console.WriteLine("Массив:");
+            Console.WriteLine(String.Join(", ", arr));
+
+            Console.WriteLine("Результат: ");
+            method(countEqual, countChange, arr);               // сортируем тута
+            Console.WriteLine(String.Join(", ", arr));
+
+            Console.WriteLine("Затрачено {0} тиков, {1} сравнений, {2} перессылок",
+                time.ElapsedTicks, countEqual, countChange);
+            time.Reset();
+        }
+
+        static void SimpleChoiseSort(int countEqual, int countChange, int[] arr)
         {
             // сортировка простым выбором
 
@@ -39,8 +85,7 @@ namespace ex12
                 arr[i] -= arr[min];                     
             }
         }
-
-        static void MSD(int[] arr)
+        static void RadixSort(int countEqual, int countChange, int[] arr)
         {
             // разобраться получше!
 
@@ -65,6 +110,18 @@ namespace ex12
             }
 
 
+        }
+
+        static int[] Generate(int length)
+        {
+            // генератор массива заданной длины
+
+            var ans = new int[length];
+
+            for (var i = 0; i < length; i++)
+                ans[i] = rand.Next();
+
+            return ans;
         }
     }
 }
