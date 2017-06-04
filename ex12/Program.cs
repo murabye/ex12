@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using MyLib;
+
+// что вообще понимать под перестановками и сравнениями для подразрядной сортировки?
 
 namespace ex12
 {
@@ -93,50 +94,32 @@ namespace ex12
         }
         static void RadixSort(int[] arr)
         {
-            // our helper array 
-            int[] t = new int[arr.Length];
+            var temp = new int[arr.Length];                             // вспомогательный массив
+            const int move = 8;                                         // насколько смещаемся
+            const int bits = 32;                                        // битов в инте
 
-            // number of bits our group will be long 
-            int r = 4; // try to set this also to 2, 8 or 16 to see if it is 
-            // quicker or not 
-
-            // number of bits of a C# int 
-            int b = 32;
-
-            // counting and prefix arrays
-            // (note dimensions 2^r which is the number of all possible values of a 
-            // r-bit number) 
-            int[] count = new int[1 << r];
-            int[] pref = new int[1 << r];
-
-            // number of groups 
-            int groups = (int)Math.Ceiling((double)b / (double)r);
-
-            // the mask to identify groups 
-            int mask = (1 << r) - 1;
-
-            // the algorithm: 
-            for (int c = 0, shift = 0; c < groups; c++, shift += r)
+            // в размер 2^move входят всевозможные значения для чисел с move битами
+            var count = new int[1 << move];                             // массив для подсчета
+            var pref = new int[1 << move];                              // массив префиксный
+            
+            var groups = (int)Math.Ceiling(bits / (double)move);        // кол-во групп
+            const int mask = (1 << move) - 1;                           // маска для идентификации групп
+            
+            for (int c = 0, shift = 0; c < groups; c++, shift += move)
             {
-                // reset count array 
-                for (int j = 0; j < count.Length; j++)
-                    count[j] = 0;
-
-                // counting elements of the c-th group 
-                for (int i = 0; i < arr.Length; i++)
-                    count[(arr[i] >> shift) & mask]++;
-
-                // calculating prefixes 
-                pref[0] = 0;
-                for (int i = 1; i < count.Length; i++)
+                count = new int[count.Length];                          // очищение массива подсчета
+                foreach (var t in arr)                                  // подсчет элементов в каждой группе
+                    count[(t >> shift) & mask]++;
+                
+                pref[0] = 0;                                            // высчитывание префикса
+                for (var i = 1; i < count.Length; i++)
                     pref[i] = pref[i - 1] + count[i - 1];
-
-                // from a[] to t[] elements ordered by c-th group 
-                for (int i = 0; i < arr.Length; i++)
-                    t[pref[(arr[i] >> shift) & mask]++] = arr[i];
-
-                // a[]=t[] and start again until the last group 
-                t.CopyTo(arr, 0);
+                
+                foreach (var t in arr)                                  // формирование вспомогательного массива
+                    temp[pref[(t >> shift) & mask]++] = t;
+                
+                temp.CopyTo(arr, 0);                                    // переносим и начинаем 
+                                                                        // заново до последней группы
             }
             // a is sorted 
 
@@ -144,9 +127,7 @@ namespace ex12
 
 
         }
-
-       
-
+        
         static int[] Generate(int length)
         {
             // генератор массива заданной длины
