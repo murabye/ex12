@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ex12
 {
     internal class Program
     {
+        static int countEqual = 0, countChange = 0;
+
         private static void Main()
         {
 
@@ -24,9 +27,13 @@ namespace ex12
                 var min = i;                            // номер минимального
 
                 for (var j = i + 1; j < length; j++)    // поиск минимума
+                {
+                    countEqual++;
                     if (arr[j] < arr[min])
                         min = j;
-                
+                }
+
+                countChange++;
                 arr[i] += arr[min];                     // перестановка arr[i] и arr[min]
                 arr[min] = arr[i] - arr[min];           // без использования дополнительной
                 arr[i] -= arr[min];                     // переменной
