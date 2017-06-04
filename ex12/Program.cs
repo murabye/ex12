@@ -5,10 +5,12 @@ using MyLib;
 
 namespace ex12
 {
-    delegate void sort(int countEq, int countCh, int[] arr);         // делегат для сортировки
+    delegate void sort(int[] arr);         // делегат для сортировки
 
     internal class Program
     {
+        static int countChange = 0;                                
+        static int countEqual = 0;                                 
         static Random rand = new Random();
 
         private static void Main()
@@ -47,15 +49,16 @@ namespace ex12
 
         static void Try(int[] arr, sort method)
         {
-            var countChange = 0;                                // подготовка: 
-            var countEqual = 0;                                 // обнуление счетчиков операций
-            var time = Stopwatch.StartNew();                    // и времени
+            var time = Stopwatch.StartNew();                    // подготовка: 
+            countChange = 0;                                    // обнуление счетчиков операций
+            countEqual = 0;                                     // и времени
 
+            Console.WriteLine();
             Console.WriteLine("Массив:");
             Console.WriteLine(String.Join(", ", arr));
 
             Console.WriteLine("Результат: ");
-            method(countEqual, countChange, arr);               // сортируем тута
+            method(arr);                                        // сортируем тута
             Console.WriteLine(String.Join(", ", arr));
 
             Console.WriteLine("Затрачено {0} тиков, {1} сравнений, {2} перессылок",
@@ -63,7 +66,7 @@ namespace ex12
             time.Reset();
         }
 
-        static void SimpleChoiseSort(int countEqual, int countChange, int[] arr)
+        static void SimpleChoiseSort(int[] arr)
         {
             // сортировка простым выбором
 
@@ -79,38 +82,70 @@ namespace ex12
                         min = j;
                 }
 
-                countChange++;                          // что считать здесь перестановкой?
-                arr[i] += arr[min];                     
-                arr[min] = arr[i] - arr[min];
-                arr[i] -= arr[min];                     
-            }
-        }
-        static void RadixSort(int countEqual, int countChange, int[] arr)
-        {
-            // разобраться получше!
-
-            int i, j;
-            var temp = new int[arr.Length];
-
-            for (var shift = 31; shift > -1; --shift)       // от последнего к первому разряду
-            {
-                j = 0;
-                for (i = 0; i < arr.Length; ++i)
+                if (i != min)
                 {
-                    countEqual++;
-                    countChange++;                          // спросить считается ли по временному массиву движуха
-                    var move = (arr[i] << shift) >= 0;      // результат смещения бита (деления на 2) >= нуля?
-                    if (shift == 0 ? !move : move)          // перемещаем 0-ой в начало
-                        arr[i - j] = arr[i];
-                    else                                    // перемещаем 1-ый во временный массив
-                        temp[j++] = temp[i];
+                    countChange++; // что считать здесь перестановкой?
+                    var temp = arr[min];
+                    arr[min] = arr[i];
+                    arr[i] = temp;
                 }
-
-                Array.Copy(temp, 0, arr, arr.Length - j, j);    // можно ли?
             }
+        }
+        static void RadixSort(int[] arr)
+        {
+            // our helper array 
+            int[] t = new int[arr.Length];
+
+            // number of bits our group will be long 
+            int r = 4; // try to set this also to 2, 8 or 16 to see if it is 
+            // quicker or not 
+
+            // number of bits of a C# int 
+            int b = 32;
+
+            // counting and prefix arrays
+            // (note dimensions 2^r which is the number of all possible values of a 
+            // r-bit number) 
+            int[] count = new int[1 << r];
+            int[] pref = new int[1 << r];
+
+            // number of groups 
+            int groups = (int)Math.Ceiling((double)b / (double)r);
+
+            // the mask to identify groups 
+            int mask = (1 << r) - 1;
+
+            // the algorithm: 
+            for (int c = 0, shift = 0; c < groups; c++, shift += r)
+            {
+                // reset count array 
+                for (int j = 0; j < count.Length; j++)
+                    count[j] = 0;
+
+                // counting elements of the c-th group 
+                for (int i = 0; i < arr.Length; i++)
+                    count[(arr[i] >> shift) & mask]++;
+
+                // calculating prefixes 
+                pref[0] = 0;
+                for (int i = 1; i < count.Length; i++)
+                    pref[i] = pref[i - 1] + count[i - 1];
+
+                // from a[] to t[] elements ordered by c-th group 
+                for (int i = 0; i < arr.Length; i++)
+                    t[pref[(arr[i] >> shift) & mask]++] = arr[i];
+
+                // a[]=t[] and start again until the last group 
+                t.CopyTo(arr, 0);
+            }
+            // a is sorted 
+
+
 
 
         }
+
+       
 
         static int[] Generate(int length)
         {
@@ -119,7 +154,7 @@ namespace ex12
             var ans = new int[length];
 
             for (var i = 0; i < length; i++)
-                ans[i] = rand.Next();
+                ans[i] = rand.Next(0, 100);
 
             return ans;
         }
