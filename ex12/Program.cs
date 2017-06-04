@@ -121,11 +121,6 @@ namespace ex12
                 temp.CopyTo(arr, 0);                                    // переносим и начинаем 
                                                                         // заново до последней группы
             }
-            // a is sorted 
-
-
-
-
         }
         
         static int[] Generate(int length)
